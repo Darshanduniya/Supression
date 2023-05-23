@@ -1,0 +1,33 @@
+
+import subprocess
+from pyspark.sql.functions import *
+from pyspark.sql import functions as f
+from operator import add
+from pyspark.sql import Row, SparkSession
+from pyspark.sql.types import StructField, StringType, StructType
+
+def sparkwithhiveone():
+    sparkwithhive = getsparkwithhive()
+    try:
+        assert (sparkwithhive.conf.get("spark.sql.catalogImplementation") == "hive")
+        sparkwithhive.sql("DROP TABLE IF EXISTS table_a")
+        sparkwithhive.sql("CREATE TABLE IF NOT EXISTS table_a")  # Modified: Use "IF NOT EXISTS" to avoid dropping the table multiple times
+        sparkwithhive.sql("DROP TABLE IF EXISTS table_b")
+        sparkwithhive.sql("CREATE TABLE IF NOT EXISTS table_b")  # Modified: Use "IF NOT EXISTS" to avoid dropping the table multiple times
+        
+        df1 = sparkwithhive.sql("SELECT COUNT(*) FROM table_a").collect()[0][0]
+        df2 = sparkwithhive.sql("SELECT COUNT(*) FROM table_b").collect()[0][0]
+        
+        if df1 == df2:  # Modified: Removed unnecessary parentheses around the condition
+            result_df1 = sparkwithhive.sql("SELECT COUNT(*) FROM table_a").collect()[0][0]
+            result_df2 = sparkwithhive.sql("SELECT COUNT(*) FROM table_b").collect()[0][0]
+            # Perform further operations on result_df1 and result_df2 if needed
+        else:
+            raise AssertionError("Count mismatch in the above tables")  # Modified: Throw an AssertionError
+            
+    except Exception as e:
+        print("Unexpected error:", e)
+        raise
+    finally:
+        sparkwithhive.stop()
+        print("Finally block")
